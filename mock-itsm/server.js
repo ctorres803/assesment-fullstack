@@ -1,4 +1,5 @@
 // ITSM simulado que imita la Table API de ServiceNow.
+const crypto = require("node:crypto");
 const express = require("express");
 
 const PORT = 4000;
@@ -6,6 +7,7 @@ const USER = process.env.ITSM_USER || "api_user";
 const PASSWORD = process.env.ITSM_PASSWORD || "api_pass";
 
 const app = express();
+app.disable("x-powered-by");
 app.use(express.json());
 
 const incidents = [];
@@ -15,12 +17,11 @@ let chaosMode = "none";
 const failure = (res, status, message) =>
   res.status(status).json({ status: "failure", error: { message } });
 
-const newSysId = () =>
-  Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16)).join("");
+const newSysId = () => crypto.randomBytes(16).toString("hex");
 
-// Control del evaluador (no documentado)
+// Modo caos: simula fallos del ITSM. Lo usan el evaluador y verificar.js.
 app.post("/__chaos", (req, res) => {
-  const mode = req.body && req.body.mode;
+  const mode = req.body?.mode;
   if (!["none", "500", "429", "slow"].includes(mode)) {
     return res.status(400).json({ error: "mode inválido" });
   }

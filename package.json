@@ -4,7 +4,7 @@
   "private": true,
   "description": "Prueba técnica Full Stack: integración con ITSM",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.6"
   },
   "scripts": {
     "mock": "node --watch --env-file=.env mock-itsm/server.js",

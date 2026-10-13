@@ -2,18 +2,22 @@
 
 Duración total: **30 minutos**. Puedes consultar documentación; **piensa en voz alta** mientras trabajas.
 
+El tiempo es ajustado a propósito: no se espera que termines todo. Se valora cómo priorizas y cómo razonas, no solo cuánto completas.
+
 ## Cómo arrancar
 
-**GitHub Codespaces:** abre el repo en un Codespace. Las dependencias y el archivo `.env` se preparan solos.
+Elige una de las dos opciones:
 
-**Local (Node 20+):**
+**Opción A: en tu equipo.** Necesitas **Node 20.6 o superior** (recomendado: 22 o 24); compruébalo con `node -v`. Clona el repo con la URL que te compartieron y, dentro de la carpeta:
 
 ```bash
 cp .env.example .env
 npm install
 ```
 
-Luego usa dos terminales:
+**Opción B: GitHub Codespaces.** Abre el repo en un Codespace desde GitHub (**Code → Codespaces**). Las dependencias y el archivo `.env` se preparan solos.
+
+En ambos casos, usa dos terminales:
 
 ```bash
 npm run mock   # terminal 1: ITSM simulado en http://localhost:4000
@@ -56,16 +60,19 @@ También existen `GET /api/now/table/incident` (lista) y `GET /api/now/table/inc
 
 1. **Backend (12 min):** implementa `POST /incidents` en `src/server.js`.
    - Recibe `{ titulo, descripcion, prioridad: "alta" | "media" | "baja" }` y crea el ticket en el ITSM.
-   - Si los datos son inválidos, responde `400` con `{ error }`.
-   - Considera que el ITSM puede fallar o tardar en responder: responde con un error claro en lugar de quedarte colgado.
+   - Traduce la prioridad al formato del ITSM: `alta` → `"1"`, `media` → `"2"`, `baja` → `"3"`.
+   - Responde con un código `2xx` e incluye el número de ticket (`INC…`) en la respuesta.
+   - `titulo` es obligatorio, `prioridad` debe ser uno de los tres valores y `descripcion` es opcional. Si los datos son inválidos, responde `400` con `{ error }`.
+   - El ITSM puede fallar o tardar en responder. En ese caso responde en un máximo de **5 segundos** con un código `5xx` y `{ error }`, en lugar de quedarte colgado.
 2. **Frontend (8 min):** en `public/index.html`, un formulario que consuma el endpoint y muestre carga, éxito (con número de ticket) y error.
 3. **Depuración (5 min):** revisa `bloque3-depuracion.js`, encuentra los errores y explica cómo corregirlos.
 4. **Preguntas (5 min):** conversación con el evaluador.
 
 ## Reglas
 
-- Usa `fetch` nativo de Node 20; no instales dependencias adicionales.
-- No necesitas hacer commit ni push: trabajarás compartiendo pantalla.
+- Usa el `fetch` nativo de Node; no instales dependencias adicionales.
+- Solo modifica `src/server.js` y `public/index.html`. Puedes leer `mock-itsm/` y `verificar.js`, pero no los cambies.
+- No necesitas hacer commit ni push: trabajarás compartiendo pantalla. Si quieres subir tu solución, haz un fork y súbela en una rama propia (por ejemplo `solucion/tu-nombre`), nunca en `main`.
 
 ## Verificar tu avance
 
@@ -76,3 +83,5 @@ npm run verificar
 ```
 
 Revisa cada paso y te indica qué falta. Puedes ejecutarlo las veces que quieras.
+
+Durante unos segundos el script hace que el ITSM simulado falle a propósito para comprobar cómo responde tu servidor; al terminar lo deja funcionando con normalidad.

@@ -1,6 +1,6 @@
 // Verifica tu avance: ejecuta `npm run verificar` con `npm run mock` y `npm run dev` corriendo.
-const fs = require("fs");
-const path = require("path");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const APP = `http://localhost:${process.env.PORT || 3000}`;
 const ITSM = process.env.ITSM_BASE_URL || "http://localhost:4000";
@@ -11,7 +11,8 @@ let fallos = 0;
 const ok = (msg) => console.log(`  ✅ ${msg}`);
 const mal = (msg, ayuda) => {
   fallos++;
-  console.log(`  ❌ ${msg}${ayuda ? `\n     → ${ayuda}` : ""}`);
+  const detalle = ayuda ? `\n     → ${ayuda}` : "";
+  console.log(`  ❌ ${msg}${detalle}`);
 };
 const info = (msg) => console.log(`  ℹ️  ${msg}`);
 const titulo = (t) => console.log(`\n${t}`);
@@ -64,8 +65,8 @@ async function entorno() {
   return itsmArriba && appArriba;
 }
 
-async function bloque1() {
-  titulo("Bloque 1: Backend (POST /incidents)");
+// Devuelve false si el endpoint aún no está implementado (501).
+async function probarDatosValidos() {
   const unico = `Verificación ${Date.now()}`;
 
   try {
@@ -73,7 +74,7 @@ async function bloque1() {
     const { texto } = await leerJson(res);
     if (res.status === 501) {
       mal("POST /incidents todavía responde 501 (No implementado)");
-      return;
+      return false;
     }
     if (res.status >= 200 && res.status < 300) ok(`Datos válidos → ${res.status}`);
     else mal(`Datos válidos → ${res.status}, se esperaba un código 2xx`, texto.slice(0, 200));
@@ -88,27 +89,45 @@ async function bloque1() {
   } catch (e) {
     mal("Error al llamar POST /incidents", e.name === "TimeoutError" ? "no respondió en 8 s" : e.message);
   }
+  return true;
+}
 
-  const invalidos = [
-    ["sin título", { descripcion: "x", prioridad: "alta" }],
-    ["prioridad inválida", { titulo: "x", descripcion: "x", prioridad: "urgente" }],
-  ];
-  for (const [caso, body] of invalidos) {
-    try {
-      const res = await crearIncidente(body);
-      const { json } = await leerJson(res);
-      if (res.status === 400 && json && json.error) ok(`Datos inválidos (${caso}) → 400 con { error }`);
-      else mal(`Datos inválidos (${caso}) → ${res.status}, se esperaba 400 con { error }`);
-    } catch (e) {
-      mal(`Error al probar datos inválidos (${caso})`, e.message);
-    }
+const probarInvalido = async ({ caso, body }) => {
+  try {
+    const res = await crearIncidente(body);
+    const { json } = await leerJson(res);
+    return { caso, status: res.status, conError: Boolean(json?.error) };
+  } catch (e) {
+    return { caso, excepcion: e.message };
   }
+};
 
+async function probarDatosInvalidos() {
+  const invalidos = [
+    { caso: "sin título", body: { descripcion: "x", prioridad: "alta" } },
+    { caso: "prioridad inválida", body: { titulo: "x", descripcion: "x", prioridad: "urgente" } },
+  ];
+  const resultados = await Promise.all(invalidos.map(probarInvalido));
+  for (const { caso, status, conError, excepcion } of resultados) {
+    if (excepcion !== undefined) mal(`Error al probar datos inválidos (${caso})`, excepcion);
+    else if (status === 400 && conError) ok(`Datos inválidos (${caso}) → 400 con { error }`);
+    else mal(`Datos inválidos (${caso}) → ${status}, se esperaba 400 con { error }`);
+  }
+}
+
+function revisarCredenciales() {
   const codigo = fs.readFileSync(path.join(__dirname, "src", "server.js"), "utf8");
   const credenciales = [process.env.ITSM_USER, process.env.ITSM_PASSWORD].filter(Boolean);
   if (credenciales.some((c) => codigo.includes(c)))
     mal("Hay credenciales escritas en src/server.js", "léelas desde process.env");
   else ok("Sin credenciales escritas en el código");
+}
+
+async function bloque1() {
+  titulo("Bloque 1: Backend (POST /incidents)");
+  if (!(await probarDatosValidos())) return;
+  await probarDatosInvalidos();
+  revisarCredenciales();
 }
 
 function bloque2() {
@@ -129,7 +148,7 @@ function bloque3() {
   info("Se revisa en conversación con el evaluador");
 }
 
-(async () => {
+async function main() {
   console.log("Verificando la prueba técnica…");
   const arriba = await entorno();
   if (arriba) await bloque1();
@@ -138,4 +157,9 @@ function bloque3() {
   bloque3();
   console.log(fallos ? `\n${fallos} punto(s) pendiente(s).` : "\n¡Todo en orden! 🎉");
   process.exitCode = fallos ? 1 : 0;
-})();
+}
+
+main().catch((e) => {
+  console.error(e);
+  process.exitCode = 1;
+});

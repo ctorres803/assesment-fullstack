@@ -143,18 +143,12 @@ function bloque2() {
   info(`Prueba en el navegador (${APP}): carga, éxito con número de ticket y error`);
 }
 
-function bloque3() {
-  titulo("Bloque 3: Depuración");
-  info("Se revisa en conversación con el evaluador");
-}
-
 async function main() {
   console.log("Verificando la prueba técnica…");
   const arriba = await entorno();
   if (arriba) await bloque1();
   else info("Bloque 1 omitido: levanta ambos servidores primero");
   bloque2();
-  bloque3();
   console.log(fallos ? `\n${fallos} punto(s) pendiente(s).` : "\n¡Todo en orden! 🎉");
   process.exitCode = fallos ? 1 : 0;
 }

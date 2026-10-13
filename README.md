@@ -54,7 +54,25 @@ También existen `GET /api/now/table/incident` (lista) y `GET /api/now/table/inc
 
 ## Bloques
 
-1. **Backend (12 min):** implementa `POST /incidents` en `src/server.js`. Recibe `{ titulo, descripcion, prioridad: "alta" | "media" | "baja" }`, valida los datos y crea el ticket en el ITSM.
+1. **Backend (12 min):** implementa `POST /incidents` en `src/server.js`.
+   - Recibe `{ titulo, descripcion, prioridad: "alta" | "media" | "baja" }` y crea el ticket en el ITSM.
+   - Si los datos son inválidos, responde `400` con `{ error }`.
+   - Considera que el ITSM puede fallar o tardar en responder: responde con un error claro en lugar de quedarte colgado.
 2. **Frontend (8 min):** en `public/index.html`, un formulario que consuma el endpoint y muestre carga, éxito (con número de ticket) y error.
 3. **Depuración (5 min):** revisa `bloque3-depuracion.js`, encuentra los errores y explica cómo corregirlos.
 4. **Preguntas (5 min):** conversación con el evaluador.
+
+## Reglas
+
+- Usa `fetch` nativo de Node 20; no instales dependencias adicionales.
+- No necesitas hacer commit ni push: trabajarás compartiendo pantalla.
+
+## Verificar tu avance
+
+Con `npm run mock` y `npm run dev` corriendo, abre una tercera terminal y ejecuta:
+
+```bash
+npm run verificar
+```
+
+Revisa cada paso y te indica qué falta. Puedes ejecutarlo las veces que quieras.

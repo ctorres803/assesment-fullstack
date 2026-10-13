@@ -1,0 +1,14 @@
+{
+  "name": "itsm-prueba-tecnica",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Prueba técnica Full Stack: integración con ITSM",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "mock": "node --watch --env-file=.env mock-itsm/server.js",
+    "dev": "node --watch --env-file=.env src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
